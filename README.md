@@ -17,8 +17,14 @@ There is a minimalistic main() function which does not do much. The package is i
 
 Example usage:
 
+	//go:build tinygo
+	package main
+	import (
+		"github.com/jceaser/picocalc-common/util"
+		"github.com/jceaser/picocalc-common/ili948x"
+	)
 	func main() {
-		if lib.Version() == 0.1 {
+		if util.Version() >= 0.1 {
 			ili948x.InitDisplay()
 		}
 	}
