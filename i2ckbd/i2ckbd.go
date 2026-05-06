@@ -46,6 +46,21 @@ const (
 	RIGHT_KEY byte = 0xb7
 	UP_KEY    byte = 0xb5
 	DOWN_KEY  byte = 0xb6
+
+	/*KEY_SUP    // 281
+	KEY_SDOWN  // 282
+	KEY_SLEFT  // 283
+	KEY_SRIGHT // 284
+	KEY_SHOME  // 285
+	KEY_SEND   // 286
+	// editing
+	KEY_CUT   // 287
+	KEY_COPY  // 288
+	KEY_PASTE // 289
+	KEY_SAVE  // 290
+	KEY_QUIT  // 291
+	KEY_HELP  // 292*/
+
 )
 
 type I2CKbd struct {
@@ -84,59 +99,156 @@ func (kbd *I2CKbd) GetChar() (byte, error) {
 	}
 	switch kbd.read[0] {
 	case 0x01:
-		return kbd.keyDown()
+		return kbd.keyDown(), nil
 	case 0x02:
-		return kbd.keyHeld()
+		return kbd.keyHeld(), nil
 	case 0x03:
-		return kbd.keyUp()
+		return kbd.keyUp(), nil
 	default:
 		return 0, fmt.Errorf("unknown key response: %v", kbd.read[0])
 	}
 }
 
 // called when a key is depressed
-func (kbd *I2CKbd) keyDown() (byte, error) {
+func (kbd *I2CKbd) keyDown() byte {
 	k := kbd.read[1]
 	switch k {
 	case ALT_KEY:
 		kbd.AltDown = true
-		return 0, nil
+		return 0
 	case CTRL_KEY:
 		kbd.CtrlDown = true
-		return 0, nil
-	default:
-		return k, nil
+		return 0
+	case F1_KEY:
+		return kbd.ifNoModifiers(F1_KEY)
+	case F2_KEY:
+		return kbd.ifNoModifiers(F2_KEY)
+	case F3_KEY:
+		return kbd.ifNoModifiers(F3_KEY)
+	case F4_KEY:
+		return kbd.ifNoModifiers(F4_KEY)
+	case F5_KEY:
+		return kbd.ifNoModifiers(F5_KEY)
+	case F6_KEY:
+		return kbd.ifNoModifiers(F6_KEY)
+	case F7_KEY:
+		return kbd.ifNoModifiers(F7_KEY)
+	case F8_KEY:
+		return kbd.ifNoModifiers(F8_KEY)
+	case F9_KEY:
+		return kbd.ifNoModifiers(F9_KEY)
+	case F10_KEY:
+		return kbd.ifNoModifiers(F10_KEY)
+	case LEFT_KEY:
+		/*if kbd.AltDown {
+			return LEFT_KEY
+		}*/
+		return kbd.ifNoModifiers(LEFT_KEY)
+	case RIGHT_KEY:
+		/*if kbd.AltDown {
+			return key.KEY_SRIGHT
+		}*/
+		return kbd.ifNoModifiers(RIGHT_KEY)
+	case UP_KEY:
+		/*if kbd.AltDown {
+			return key.KEY_SUP
+		}
+		if kbd.CtrlDown {
+			return key.KEY_PAGEUP
+		}*/
+		return UP_KEY
+	case DOWN_KEY:
+		/*if kbd.AltDown {
+			return key.KEY_SDOWN
+		}
+		if kbd.CtrlDown {
+			return key.KEY_PAGEDOWN
+		}*/
+		return DOWN_KEY
+	case BACKSPACE_KEY:
+		return kbd.ifNoModifiers(BACKSPACE_KEY)
+	case DEL_KEY:
+		return kbd.ifNoModifiers(DEL_KEY)
+	case INS_KEY:
+		return kbd.ifNoModifiers(INS_KEY)
+	case END_KEY:
+		if kbd.AltDown {
+			return END_KEY //key.KEY_SEND
+		}
+		return kbd.ifNoModifiers(END_KEY)
+	case HOME_KEY:
+		/*if kbd.AltDown {
+			return key.KEY_SHOME
+		}*/
+		return kbd.ifNoModifiers(HOME_KEY)
+	case ESC_KEY:
+		return kbd.ifNoModifiers(27)
+	/*case 'C':
+		if kbd.AltDown {
+			return key.KEY_COPY
+		}
+	case 'H':
+		if kbd.AltDown {
+			return key.KEY_HELP
+		}
+	case 'Q':
+		if kbd.AltDown {
+			return key.KEY_QUIT
+		}
+	case 'S':
+		if kbd.AltDown {
+			return key.KEY_SAVE
+		}
+	case 'V':
+		if kbd.AltDown {
+			return key.KEY_PASTE
+		}
+	case 'X':
+		if kbd.AltDown {
+			return key.KEY_CUT
+		}
+	case 'c':
+		if kbd.CtrlDown {
+			return key.KEY_BREAK
+		}*/
 	}
+	if k < 0x80 {
+		return kbd.ifNoModifiers(k)
+	}
+	return 0
 }
 
 // Sometimes called when a key is held.  Usually just for modifier keys.
-func (kbd *I2CKbd) keyHeld() (byte, error) {
+func (kbd *I2CKbd) keyHeld() byte {
 	switch kbd.read[1] {
 	case ALT_KEY:
 		// likely not needed, but doesn't hurt anything either
 		kbd.AltDown = true
-		return 0, nil
 	case CTRL_KEY:
 		// likely not needed, but doesn't hurt anything either
 		kbd.CtrlDown = true
-		return 0, nil
-	default:
-		return 0, nil
 	}
+	return 0
 }
 
 // Called when a key is released.  We mostly don't care outside of modifier keys
-func (kbd *I2CKbd) keyUp() (byte, error) {
+func (kbd *I2CKbd) keyUp() byte {
 	switch kbd.read[1] {
 	case ALT_KEY:
 		kbd.AltDown = false
-		return 0, nil
 	case CTRL_KEY:
 		kbd.CtrlDown = false
-		return 0, nil
-	default:
-		return 0, nil
 	}
+	return 0
+}
+
+// Covers the common path where we only want to report a key
+// if no other modifiers are held down.
+func (kbd *I2CKbd) ifNoModifiers(k byte) byte {
+    if kbd.CtrlDown || kbd.AltDown {
+        return 0
+    }
+    return k
 }
 
 // ***************************************************************************80
@@ -157,4 +269,3 @@ func (kbd *I2CKbd) ReadBattery() int16 {
 
     return int16(kbd.read[1])
 }
-

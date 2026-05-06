@@ -1,6 +1,6 @@
 //go:build tinygo
 
-package lib
+package ili948x
 
 const ( // ILI9488 Datasheet, pp. 140-147
 	CMD_NOP     uint8 = 0x00 // No Operation

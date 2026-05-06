@@ -1,6 +1,6 @@
 //go:build tinygo
 
-package lib
+package ili948x
 
 import (
 	"machine"

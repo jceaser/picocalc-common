@@ -1,7 +1,5 @@
 //go:build tinygo
 
-package lib
-
 // The starting point for this code was https://github.com/inindev/ili948x
 // but it's been heavily modified to the point where it shares little in common
 // with the original.  Some changes:
@@ -9,15 +7,13 @@ package lib
 // 1) Use RGB565 instead of RGB666 for faster screen updates
 // 2) Introduce compatbility with the tinygo displayer interface
 // 3) Add RGB565 and Bitmap for efficient (basically direct) pixel operations.
-
+package ili948x
 
 import (
 	"image/color"
 
 	"machine"
 	"time"
-
-    "picocalc/ili948x"
 
 	"tinygo.org/x/drivers/pixel"
 )
@@ -366,12 +362,12 @@ func (disp *Ili948x) Display() error {
 // Uses hardware scrolling for efficiency
 func (disp *Ili948x) ScrollUp(pixels int16) {
 	// Wrap the scroll offset within the 320-pixel height
-	offset := (pixels % ili948x.TFT_HEIGHT)
+	offset := (pixels % TFT_HEIGHT)
 	if offset < 0 {
-		offset += ili948x.TFT_HEIGHT
+		offset += TFT_HEIGHT
 	}
 	
-	disp.writeCmd(ili948x.CMD_VSCRSADD,
+	disp.writeCmd(CMD_VSCRSADD,
 		uint8(offset>>8),
 		uint8(offset),
 	)
