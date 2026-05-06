@@ -1,4 +1,4 @@
-package lib
+package util
 
 func Version() float64 {
 	return 0.1

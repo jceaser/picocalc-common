@@ -11,27 +11,15 @@ Compile with:
 package main
 
 import (
-	/*"bytes"
-	"fmt"
-	"image/color"
-	"os"
-	"strings"
-	"time"*/
 
-	//"picocalc/i2ckbd"
-	//"picocalc/ili948x"
-
-	//"tinygo.org/x/tinyfont"
-	//"tinygo.org/x/tinyfont/freemono"
-
-	"github.com/jceaser/picocalc-common/lib"
+	"github.com/jceaser/picocalc-common/util"
 	"github.com/jceaser/picocalc-common/ili948x"
 	"machine"
 )
 
 // 320x320 screen size
 func main() {
-	if lib.Version() == 0.1 {
+	if util.Version() == 0.1 {
 		machine.Watchdog.Start()
 		ili948x.InitDisplay()
 	}
