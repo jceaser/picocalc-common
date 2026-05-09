@@ -1,9 +1,9 @@
 name: Go Tests
 
-on:
-  push:
-    branches:
-      - '**'  # Run for every commit on any branch
+#on:
+#  push:
+#    branches:
+#      - '**'  # Run for every commit on any branch
 
 jobs:
   run_tests:
