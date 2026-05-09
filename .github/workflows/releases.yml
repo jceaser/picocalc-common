@@ -1,0 +1,40 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Responds to tag versions like v1.0.0
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      #- name: Set up Go
+      #  uses: actions/setup-go@v2
+      #  with:
+      #    go-version: '1.25.9'  # Specify your Go version
+
+      #- name: Build
+      #  run: go build -v ./...
+
+      - name: Setup tinygo
+        uses: tinygo-org/action-tinygo@v0.5.0
+      - name: Build Pico
+        run: run build -o rpn.uf2 -target=pico
+      - name: Build Pico2
+        run: run build -o rpn_2.uf2 -target=pico2
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this release:
+            - Your release notes here.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
