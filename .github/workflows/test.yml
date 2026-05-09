@@ -1,0 +1,22 @@
+name: Go Tests
+
+on:
+  push:
+    branches:
+      - '**'  # Run for every commit on any branch
+
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.25'  # Specify your Go version
+
+      - name: Run tests
+        run: go test ./rpn...  # Run tests in the rpn directory
