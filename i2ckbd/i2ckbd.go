@@ -1,7 +1,13 @@
 //go:build tinygo
 
-// Package I2cKbd creates an interface to the keyboard of the
-// picocalc
+// ********************************************************************************************* 100
+/*
+Package I2cKbd creates an interface to the keyboard of the
+picocalc
+
+lots of details can be found at:
+https://pip-assets.raspberrypi.com/categories/814-rp2040/documents/RP-008371-DS-1-rp2040-datasheet.pdf
+*/
 
 package i2ckbd
 
@@ -13,7 +19,7 @@ import (
 // IMPORTANT:
 //
 // 1. The PicoCalc must be powered on for the i2c keyboard chip to be active.
-// I wasted a bit of time discovering this!
+// I [mattwach] wasted a bit of time discovering this!
 //
 // 2. Do not use batteries in the PicoCalc while it's pluggen in via USB mini and turned on
 // becuase an electrical path is opened that causes the 18650 batteries to be charged
@@ -23,44 +29,50 @@ var i2cKbdAddr uint16 = 0x1F
 const i2cGetKey = 0x09
 
 const (
-	ALT_KEY       byte = 0xA1
-	BACKSPACE_KEY      = 0x08
-	CTRL_KEY      byte = 0xA5
-	DEL_KEY       byte = 0xd4
-	END_KEY       byte = 0xd5
-	ESC_KEY       byte = 0xb1
-	F1_KEY        byte = 0x81
-	F2_KEY        byte = 0x82
-	F3_KEY        byte = 0x83
-	F4_KEY        byte = 0x84
-	F5_KEY        byte = 0x85
-	F6_KEY        byte = 0x86
-	F7_KEY        byte = 0x87
-	F8_KEY        byte = 0x88
-	F9_KEY        byte = 0x89
-	F10_KEY       byte = 0x90 // odd it's not 0x8A
-	HOME_KEY      byte = 0xd2
-	INS_KEY       byte = 0xd1
+	BACKSPACE_KEY 	byte = 0x08
+	TAB_KEY		  	byte = 0x09
+	ENTER_KEY		byte = 0x0a
 
-	LEFT_KEY  byte = 0xb4
-	RIGHT_KEY byte = 0xb7
-	UP_KEY    byte = 0xb5
-	DOWN_KEY  byte = 0xb6
+	ESC        		byte = 0x1b
+	SPACE_KEY		byte = 0x20
 
-	/*KEY_SUP    // 281
-	KEY_SDOWN  // 282
-	KEY_SLEFT  // 283
-	KEY_SRIGHT // 284
-	KEY_SHOME  // 285
-	KEY_SEND   // 286
-	// editing
-	KEY_CUT   // 287
-	KEY_COPY  // 288
-	KEY_PASTE // 289
-	KEY_SAVE  // 290
-	KEY_QUIT  // 291
-	KEY_HELP  // 292*/
+	// ! - @ 	is 0x21 to 0x40
+	// A - Z 	is 0x41 to 0x5a
+	// [ - ~ 	is 0x5b to 0x60
+	// a - z	is 0x61 to 0x7a
+	// { - ~ 	is 0x7b to 0x7e
+	// no 0x7f or 0x80
 
+	F1_KEY        	byte = 0x81 // held
+	F2_KEY        	byte = 0x82 // held
+	F3_KEY        	byte = 0x83 // held
+	F4_KEY        	byte = 0x84 // held
+	F5_KEY        	byte = 0x85 // held
+	F6_KEY        	byte = 0x86 // held
+	F7_KEY        	byte = 0x87 // held
+	F8_KEY        	byte = 0x88 // held
+	F9_KEY        	byte = 0x89 // held
+	F10_KEY       	byte = 0x90 // held - odd it's not 0x8A
+
+	ALT_KEY       	byte = 0xa1 // held
+	LEFT_SHIFT_KEY 	byte = 0xa2 // held
+	RIGHT_SHIFT_KEY byte = 0xa3 // held
+	CTRL_KEY      	byte = 0xa5 // held
+
+	ESC_KEY			byte = 0xb1 // held - note it is not 0x1b
+
+	LEFT_KEY		byte = 0xb4
+	UP_KEY			byte = 0xb5
+	DOWN_KEY   	  	byte = 0xb6
+	RIGHT_KEY 	  	byte = 0xb7
+
+	CAPS_LOCK_KEY	byte = 0xc1 // held
+
+	BREAK_KEY		byte = 0xd0
+	INS_KEY       	byte = 0xd1
+	HOME_KEY      	byte = 0xd2 // 210
+	DEL_KEY       	byte = 0xd4
+	END_KEY       	byte = 0xd5
 )
 
 type I2CKbd struct {
@@ -69,7 +81,10 @@ type I2CKbd struct {
 	read     []byte
 	AltDown  bool
 	CtrlDown bool
+	LastKey  KeyDetail
 }
+
+// ***************************************************************************80
 
 // Init initialized the i2c driver.  It may be necessary to add the ability to
 // provided an i2c driver if the bus is shared (I don't believe it is currently).
@@ -78,6 +93,7 @@ func (kbd *I2CKbd) Init() error {
 	kbd.write[0] = i2cGetKey
 	kbd.read = make([]byte, 2)
 	kbd.i2c = machine.I2C1
+	kbd.LastKey = KeyDetail{}
 	return kbd.i2c.Configure(machine.I2CConfig{
 		SCL: machine.GP7,
 		SDA: machine.GP6,
@@ -182,35 +198,7 @@ func (kbd *I2CKbd) keyDown() byte {
 		}*/
 		return kbd.ifNoModifiers(HOME_KEY)
 	case ESC_KEY:
-		return kbd.ifNoModifiers(27)
-	/*case 'C':
-		if kbd.AltDown {
-			return key.KEY_COPY
-		}
-	case 'H':
-		if kbd.AltDown {
-			return key.KEY_HELP
-		}
-	case 'Q':
-		if kbd.AltDown {
-			return key.KEY_QUIT
-		}
-	case 'S':
-		if kbd.AltDown {
-			return key.KEY_SAVE
-		}
-	case 'V':
-		if kbd.AltDown {
-			return key.KEY_PASTE
-		}
-	case 'X':
-		if kbd.AltDown {
-			return key.KEY_CUT
-		}
-	case 'c':
-		if kbd.CtrlDown {
-			return key.KEY_BREAK
-		}*/
+		return kbd.ifNoModifiers(ESC)
 	}
 	if k < 0x80 {
 		return kbd.ifNoModifiers(k)
@@ -228,7 +216,7 @@ func (kbd *I2CKbd) keyHeld() byte {
 		// likely not needed, but doesn't hurt anything either
 		kbd.CtrlDown = true
 	}
-	return 0
+	return 0x02
 }
 
 // Called when a key is released.  We mostly don't care outside of modifier keys
@@ -239,7 +227,7 @@ func (kbd *I2CKbd) keyUp() byte {
 	case CTRL_KEY:
 		kbd.CtrlDown = false
 	}
-	return 0
+	return 0x03
 }
 
 // Covers the common path where we only want to report a key

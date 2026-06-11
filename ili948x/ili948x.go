@@ -70,6 +70,30 @@ type Ili948x struct {
 	y0, y1 int16       //  CMD_PASET and CMD_CASET
 }
 
+// ***************************************************************************80
+// MARK - general functions
+
+// abs returns the absolute value of x.
+func abs(x int16) int16 {
+    if x < 0 {
+        return -x
+    }
+    return x
+}
+
+// sign returns 1 if x is positive, -1 if negative, and 0 if zero.
+func sign(x int16) int16 {
+    if x > 0 {
+        return 1
+    } else if x < 0 {
+        return -1
+    }
+    return 0
+}
+
+// ***************************************************************************80
+// MARK - init functions
+
 func InitDisplay() *Ili948x {
 	machine.SPI1.Configure(machine.SPIConfig{
 		SCK:       machine.GP10,
@@ -127,6 +151,9 @@ func NewIli9488(trans *spiTransport, cs, dc, rst machine.Pin) *Ili948x {
 	return disp
 }
 
+// ***************************************************************************80
+// MARK - Ili948x functions
+
 // For compatibility with https://github.com/tinygo-org/drivers/blob/release/displayer.go
 // Size returns the current size of the display.
 func (disp *Ili948x) Size() (int16, int16) {
@@ -149,6 +176,36 @@ func (disp *Ili948x) SetPixel565(x, y int16, c RGB565) {
 	disp.startWrite()
 	disp.trans.write16(uint16(c))
 	disp.endWrite()
+}
+
+// DrawLine draws a line with the specified color.
+func (disp *Ili948x) DrawLine(p1, p2 Point, c RGB565) {
+	var x0, y0, x1, y1 int16
+	x0 = p1.X
+	y0 = p1.Y
+	x1 = p2.X
+	y1 = p2.Y
+    dx := abs(x1 - x0)
+    dy := abs(y1 - y0)
+    sx := sign(x1 - x0)
+    sy := sign(y1 - y0)
+    err := dx - dy
+
+    for {
+        disp.SetPixel565(x0, y0, c)
+        if x0 == x1 && y0 == y1 {
+            break
+        }
+        e2 := 2 * err
+        if e2 > -dy {
+            err -= dy
+            x0 += sx
+        }
+        if e2 < dx {
+            err += dx
+            y0 += sy
+        }
+    }
 }
 
 // DrawHLine draws a horizontal line with the specified color.
